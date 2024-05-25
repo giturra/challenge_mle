@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -27,7 +28,9 @@ class DelayModel:
         self.random_state = 1
         self.learning_rate = 0.01
 
-        self._model = None  # Model should be saved in this attribute.
+        self._model = None
+
+        self.trained_model_path = self.__create_path_for_save_trained_models()
 
     def preprocess(
         self, data: pd.DataFrame, target_column: str = None
@@ -45,13 +48,20 @@ class DelayModel:
             pd.DataFrame: features.
         """
 
-        features, target = self.__prepocess_dataset(
+        data, features = self.__prepocess_dataset(
             data=data, threshold_in_minutes=15, target_column=target_column
         )
         if target_column:
+            target = data[[target_column]]
             return features, target
 
         return features
+
+    def __create_path_for_save_trained_models(self):
+        dir_path = f"{os.getcwd()}/trained_models"
+        if not os.path.isdir(dir_path):
+            os.mkdir(dir_path)
+        return dir_path
 
     def __prepocess_dataset(
         self, data: pd.DataFrame, threshold_in_minutes: int, target_column: str
@@ -70,12 +80,11 @@ class DelayModel:
             ],
             axis=1,
         )
-        target = data[target_column]
-        return features, target
+        return data, features[self.__top_10_features]
 
-    def __scale_pos_weight(self, target: pd.DataFrame) -> None:
-        n_y0 = len(target[target == 0])
-        n_y1 = len(target[target == 1])
+    def __scale_pos_weight(self, target: pd.DataFrame) -> float:
+        n_y0 = len(target[target["delay"] == 0])
+        n_y1 = len(target[target["delay"] == 1])
         scale = n_y0 / n_y1
         return scale
 
@@ -85,18 +94,26 @@ class DelayModel:
         target: pd.DataFrame,
         test_size: float = 0.33,
         random_state=123,
-        shuffle: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         x_train, x_test, y_train, y_test = train_test_split(
             features,
             target,
             test_size=test_size,
             random_state=random_state,
-            shuffle=shuffle,
         )
         return x_train, x_test, y_train, y_test
 
+    def __save_model(self) -> None:
+        self._model.save_model(f"{self.trained_model_path}/xgb_model.json")
+
+    def __load_model(self) -> XGBClassifier:
+        loaded_model = XGBClassifier()
+        loaded_model.load_model(f"{self.trained_model_path}/xgb_model.json")
+        return loaded_model
+
     def get_model(self) -> XGBClassifier:
+        if self._model is None:
+            self._model = self.__load_model()
         return self._model
 
     def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
@@ -107,14 +124,16 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
             target (pd.DataFrame): target.
         """
-        scale: float = self.__scale_pos_weight(target=target)
+        x_train, _, y_train, _ = self.__split_dataset(features=features, target=target)
+        scale: float = self.__scale_pos_weight(target=y_train)
+        print(f"scale = {scale}")
         self._model = XGBClassifier(
             random_state=self.random_state,
             learning_rate=self.learning_rate,
             scale_pos_weight=scale,
         )
-        x_train, _, y_train, _ = self.__split_dataset(features=features, target=target)
         self._model.fit(x_train, y_train)
+        self.__save_model()
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
@@ -126,5 +145,5 @@ class DelayModel:
         Returns:
             (List[int]): predicted targets.
         """
-        predicted_targets = self._model.predict(features)
+        predicted_targets = self.get_model().predict(features)
         return [1 if y_pred > 0.5 else 0 for y_pred in predicted_targets]
