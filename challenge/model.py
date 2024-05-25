@@ -2,6 +2,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from utils import get_min_diff
 from xgboost import XGBClassifier
 
@@ -63,6 +64,23 @@ class DelayModel:
         scale = n_y0 / n_y1
         return scale
 
+    def __split_dataset(
+        self,
+        features: pd.DataFrame,
+        target: pd.DataFrame,
+        test_size: float = 0.33,
+        random_state=123,
+        shuffle: bool = True,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        x_train, x_test, y_train, y_test = train_test_split(
+            features,
+            target,
+            test_size=test_size,
+            random_state=random_state,
+            shuffle=shuffle,
+        )
+        return x_train, x_test, y_train, y_test
+
     def get_model(self) -> XGBClassifier:
         return self._model
 
@@ -80,7 +98,8 @@ class DelayModel:
             learning_rate=self.learning_rate,
             scale_pos_weight=scale,
         )
-        return
+        x_train, _, y_train, _ = self.__split_dataset(features=features, target=target)
+        self.model.fit(x_train, y_train)
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
