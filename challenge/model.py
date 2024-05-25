@@ -3,8 +3,10 @@ from typing import List, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from utils import get_min_diff
+from sklearn.utils import shuffle
 from xgboost import XGBClassifier
+
+from .utils import get_min_diff
 
 
 class DelayModel:
@@ -43,20 +45,33 @@ class DelayModel:
             pd.DataFrame: features.
         """
 
-        data = self.__prepocess_dataset(data=data, threshold_in_minutes=15)
+        features, target = self.__prepocess_dataset(
+            data=data, threshold_in_minutes=15, target_column=target_column
+        )
         if target_column:
-            features = data[self.__top_10_features]
-            target = data[target_column]
             return features, target
 
-        return data
+        return features
 
     def __prepocess_dataset(
-        self, data: pd.DataFrame, threshold_in_minutes: int
-    ) -> pd.DataFrame:
+        self, data: pd.DataFrame, threshold_in_minutes: int, target_column: str
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         data["min_diff"] = data.apply(get_min_diff, axis=1)
         data["delay"] = np.where(data["min_diff"] > threshold_in_minutes, 1, 0)
-        return data
+        data = shuffle(
+            data[["OPERA", "MES", "TIPOVUELO", "SIGLADES", "DIANOM", "delay"]],
+            random_state=111,
+        )
+        features = pd.concat(
+            [
+                pd.get_dummies(data["OPERA"], prefix="OPERA"),
+                pd.get_dummies(data["TIPOVUELO"], prefix="TIPOVUELO"),
+                pd.get_dummies(data["MES"], prefix="MES"),
+            ],
+            axis=1,
+        )
+        target = data[target_column]
+        return features, target
 
     def __scale_pos_weight(self, target: pd.DataFrame) -> None:
         n_y0 = len(target[target == 0])
@@ -99,7 +114,7 @@ class DelayModel:
             scale_pos_weight=scale,
         )
         x_train, _, y_train, _ = self.__split_dataset(features=features, target=target)
-        self.model.fit(x_train, y_train)
+        self._model.fit(x_train, y_train)
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
@@ -111,4 +126,5 @@ class DelayModel:
         Returns:
             (List[int]): predicted targets.
         """
-        return
+        predicted_targets = self._model.predict(features)
+        return [1 if y_pred > 0.5 else 0 for y_pred in predicted_targets]
