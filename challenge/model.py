@@ -1,15 +1,34 @@
 from typing import List, Tuple, Union
 
+import numpy as np
 import pandas as pd
+from utils import get_min_diff
+from xgboost import XGBClassifier
 
 
 class DelayModel:
-    def __init__(self):
+    def __init__(self) -> None:
+        self.__top_10_features = [
+            "OPERA_Latin American Wings",
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air",
+        ]
+
+        self.random_state = 1
+        self.learning_rate = 0.01
+
         self._model = None  # Model should be saved in this attribute.
 
-    def preprocess(self, data: pd.DataFrame, target_column: str = None) -> Union(
-        Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame
-    ):
+    def preprocess(
+        self, data: pd.DataFrame, target_column: str = None
+    ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
         """
         Prepare raw data for training or predict.
 
@@ -23,7 +42,29 @@ class DelayModel:
             pd.DataFrame: features.
         """
 
-        return
+        data = self.__prepocess_dataset(data=data, threshold_in_minutes=15)
+        if target_column:
+            features = data[self.__top_10_features]
+            target = data[target_column]
+            return features, target
+
+        return data
+
+    def __prepocess_dataset(
+        self, data: pd.DataFrame, threshold_in_minutes: int
+    ) -> pd.DataFrame:
+        data["min_diff"] = data.apply(get_min_diff, axis=1)
+        data["delay"] = np.where(data["min_diff"] > threshold_in_minutes, 1, 0)
+        return data
+
+    def __scale_pos_weight(self, target: pd.DataFrame) -> None:
+        n_y0 = len(target[target == 0])
+        n_y1 = len(target[target == 1])
+        scale = n_y0 / n_y1
+        return scale
+
+    def get_model(self) -> XGBClassifier:
+        return self._model
 
     def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
         """
@@ -33,6 +74,12 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
             target (pd.DataFrame): target.
         """
+        scale: float = self.__scale_pos_weight(target=target)
+        self._model = XGBClassifier(
+            random_state=self.random_state,
+            learning_rate=self.learning_rate,
+            scale_pos_weight=scale,
+        )
         return
 
     def predict(self, features: pd.DataFrame) -> List[int]:
