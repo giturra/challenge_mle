@@ -22,6 +22,7 @@ class DelayModel:
             or
             pd.DataFrame: features.
         """
+
         return
 
     def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
