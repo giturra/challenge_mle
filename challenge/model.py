@@ -11,7 +11,21 @@ from .utils import get_min_diff
 
 
 class DelayModel:
+    """
+    A model for predicting flight delays based on various features.
+
+    Attributes:
+        __top_10_features (List[str]): List of top 10 features used for prediction.
+        random_state (int): Random state for reproducibility.
+        learning_rate (float): Learning rate for the XGBoost model.
+        _model (XGBClassifier): The XGBoost model instance.
+        trained_model_path (str): Path to save the trained model.
+    """
+
     def __init__(self) -> None:
+        """
+        Initialize the DelayModel class.
+        """
         self.__top_10_features = [
             "OPERA_Latin American Wings",
             "MES_7",
@@ -57,7 +71,13 @@ class DelayModel:
 
         return features
 
-    def __create_path_for_save_trained_models(self):
+    def __create_path_for_save_trained_models(self) -> str:
+        """
+        Create a directory to save trained models.
+
+        Returns:
+            str: Path to the directory where trained models are saved.
+        """
         dir_path = f"{os.getcwd()}/trained_models"
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
@@ -66,6 +86,17 @@ class DelayModel:
     def __prepocess_dataset(
         self, data: pd.DataFrame, threshold_in_minutes: int, target_column: str
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Preprocess the dataset by calculating the delay and creating features.
+
+        Args:
+            data (pd.DataFrame): Raw data.
+            threshold_in_minutes (int): Threshold in minutes to determine delay.
+            target_column (str): Name of the target column.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame]: Processed data and features.
+        """
         data["min_diff"] = data.apply(get_min_diff, axis=1)
         data["delay"] = np.where(data["min_diff"] > threshold_in_minutes, 1, 0)
         data = shuffle(
@@ -83,6 +114,15 @@ class DelayModel:
         return data, features[self.__top_10_features]
 
     def __scale_pos_weight(self, target: pd.DataFrame) -> float:
+        """
+        Calculate the scale_pos_weight parameter for the XGBoost model.
+
+        Args:
+            target (pd.DataFrame): Target data.
+
+        Returns:
+            float: Scale position weight.
+        """
         n_y0 = len(target[target["delay"] == 0])
         n_y1 = len(target[target["delay"] == 1])
         scale = n_y0 / n_y1
@@ -95,6 +135,21 @@ class DelayModel:
         test_size: float = 0.33,
         random_state=123,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Split the dataset into training and testing sets.
+
+        Args:
+            features (pd.DataFrame): Features data.
+            target (pd.DataFrame): Target data.
+            test_size (float, optional): Proportion of the dataset to include in the
+                test split. Defaults to 0.33.
+            random_state (int, optional): Random state for reproducibility. Defaults
+            to 123.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]: Training and
+                testing features and targets.
+        """
         x_train, x_test, y_train, y_test = train_test_split(
             features,
             target,
@@ -104,14 +159,29 @@ class DelayModel:
         return x_train, x_test, y_train, y_test
 
     def __save_model(self) -> None:
+        """
+        Save the trained model to a file.
+        """
         self._model.save_model(f"{self.trained_model_path}/xgb_model.json")
 
     def __load_model(self) -> XGBClassifier:
+        """
+        Load the trained model from a file.
+
+        Returns:
+            XGBClassifier: Loaded XGBoost model.
+        """
         loaded_model = XGBClassifier()
         loaded_model.load_model(f"{self.trained_model_path}/xgb_model.json")
         return loaded_model
 
     def get_model(self) -> XGBClassifier:
+        """
+        Get the trained model. Load it if it is not already loaded.
+
+        Returns:
+            XGBClassifier: Trained XGBoost model.
+        """
         if self._model is None:
             self._model = self.__load_model()
         return self._model
