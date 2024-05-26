@@ -63,7 +63,7 @@ class DelayModel:
             pd.DataFrame: features.
         """
 
-        features = self.__prepocess_dataset(data=data)
+        features = self.prepocess_dataset(data=data)
         if target_column:
             data["min_diff"] = data.apply(get_min_diff, axis=1)
             data["delay"] = np.where(data["min_diff"] > self.threshold_in_minutes, 1, 0)
