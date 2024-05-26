@@ -6,7 +6,7 @@ on:
       - feature/adding-ci-cd-configurations
   pull_request:
     branches:
-      - main
+      - feature/adding-ci-cd-configurations
 
 jobs:
   build-and-test:
