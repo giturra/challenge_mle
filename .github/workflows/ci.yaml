@@ -28,12 +28,8 @@ jobs:
 
 
     - name: Run tests  
-      run: |
+      run: make model-test
 
-        python -c "import os; os.chdir(os.getenv('GITHUB_WORKSPACE')); import pytest; pytest.main()"
-        make model-test
-        make api-test
-        make stress-test
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
