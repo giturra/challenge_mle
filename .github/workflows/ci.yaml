@@ -24,8 +24,13 @@ jobs:
     - name: Install dependencies
       run: make install
 
+      
+
+
     - name: Run tests  
       run: |
+
+        python -c "import os; os.chdir(os.getenv('GITHUB_WORKSPACE')); import pytest; pytest.main()"
         make model-test
         make api-test
         make stress-test
