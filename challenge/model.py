@@ -193,7 +193,6 @@ class DelayModel:
         """
         x_train, _, y_train, _ = self.__split_dataset(features=features, target=target)
         scale: float = self.__scale_pos_weight(target=y_train)
-        print(f"scale = {scale}")
         self._model = XGBClassifier(
             random_state=self.random_state,
             learning_rate=self.learning_rate,

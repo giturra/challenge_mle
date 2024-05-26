@@ -6,6 +6,19 @@ from pydantic import BaseModel
 
 from challenge.model import DelayModel
 
+TOP_10_FEATURES = [
+    "OPERA_Latin American Wings",
+    "MES_7",
+    "MES_10",
+    "OPERA_Grupo LATAM",
+    "MES_12",
+    "TIPOVUELO_I",
+    "MES_4",
+    "MES_11",
+    "OPERA_Sky Airline",
+    "OPERA_Copa Air",
+]
+
 
 class Flight(BaseModel):
     OPERA: str
@@ -18,7 +31,7 @@ class Flights(BaseModel):
 
 
 app = fastapi.FastAPI()
-model = DelayModel()
+delay_model = DelayModel()
 
 
 @app.get("/health", status_code=200)
@@ -27,13 +40,22 @@ async def get_health() -> dict:
 
 
 def preprocess_flights(flights: Flights):
-    raw_data = flights.dict()["flights"]
-    return raw_data
+    data_df = pd.DataFrame(flights.dict()["flights"])
+    data_dict = delay_model.prepocess_dataset(pd.DataFrame(data_df)).to_dict()
+
+    for key in TOP_10_FEATURES:
+        if key not in data_dict:
+            data_dict[key] = [0]
+
+    remove_columns = [key for key in data_dict if key not in TOP_10_FEATURES]
+
+    for key in remove_columns:
+        data_dict.pop(key)
+
+    return pd.DataFrame(data_dict)
 
 
 @app.post("/predict", status_code=200)
 async def post_predict(flights: Flights) -> dict:
-    raw_data_list = flights.dict()["flights"]
-    raw_data_df = model.prepocess_dataset(pd.DataFrame(raw_data_list))
-    print(raw_data_df)
-    return flights.dict()["flights"]
+    req_data_df = preprocess_flights(flights)
+    return {"predict": delay_model.predict(req_data_df)}
