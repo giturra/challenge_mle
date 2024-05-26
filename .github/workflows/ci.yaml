@@ -24,12 +24,11 @@ jobs:
     - name: Install dependencies
       run: make install
 
-      
-
-
     - name: Run tests  
-      run: make model-test
-
+      run: | 
+        make model-test
+        make api-test
+        make stress-test
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
