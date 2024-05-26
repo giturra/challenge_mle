@@ -32,9 +32,53 @@ class Flight(BaseModel):
         month_numbers = list(range(1, 13))
         if month not in month_numbers:
             raise ValueError(
-                f"MES must be a number between: {month_numbers}, but you five {month}"
+                f"MES must be a number between: {month_numbers}, but you give {month}."
             )
         return month
+
+    @validator("OPERA")
+    def valid_flight_airline(cls, airline):
+        validate_airlines = [
+            "Aerolineas Argentinas",
+            "Aeromexico",
+            "Air Canada",
+            "Air France",
+            "Alitalia",
+            "American Airlines",
+            "Austral",
+            "Avianca",
+            "British Airways",
+            "Copa Air",
+            "Delta Air",
+            "Gol Trans",
+            "Grupo LATAM",
+            "Iberia",
+            "JetSmart SPA",
+            "K.L.M.",
+            "Lacsa",
+            "Latin American Wings",
+            "Oceanair Linhas Aereas",
+            "Plus Ultra Lineas Aereas",
+            "Qantas Airways",
+            "Sky Airline",
+            "United Airlines",
+        ]
+        if airline not in validate_airlines:
+            raise ValueError(
+                f"OPERA must be an airline between: {validate_airlines}, but you give "
+                f"{airline}."
+            )
+        return airline
+
+    @validator("TIPOVUELO")
+    def valid_flight_type(cls, flight_type):
+        validate_flight_type = ["I", "N"]
+        if flight_type not in validate_flight_type:
+            raise ValueError(
+                f"TIPOVUELO must be an flight type between: {validate_flight_type}, but"
+                f" you give {flight_type}."
+            )
+        return flight_type
 
 
 class Flights(BaseModel):
@@ -61,7 +105,7 @@ async def get_health() -> dict:
 def preprocess_flights(flights: Flights):
     data_df = pd.DataFrame(flights.dict()["flights"])
     data_dict = delay_model.prepocess_dataset(pd.DataFrame(data_df)).to_dict()
-
+    print(data_dict.keys())
     for key in TOP_10_FEATURES:
         if key not in data_dict:
             data_dict[key] = [0]
