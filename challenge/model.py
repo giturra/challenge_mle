@@ -4,7 +4,6 @@ from typing import List, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
 from xgboost import XGBClassifier
 
 from .utils import get_min_diff
@@ -44,6 +43,8 @@ class DelayModel:
 
         self._model = None
 
+        self.threshold_in_minutes = 15
+
         self.trained_model_path = self.__create_path_for_save_trained_models()
 
     def preprocess(
@@ -62,14 +63,14 @@ class DelayModel:
             pd.DataFrame: features.
         """
 
-        data, features = self.__prepocess_dataset(
-            data=data, threshold_in_minutes=15, target_column=target_column
-        )
+        features = self.__prepocess_dataset(data=data)
         if target_column:
+            data["min_diff"] = data.apply(get_min_diff, axis=1)
+            data["delay"] = np.where(data["min_diff"] > self.threshold_in_minutes, 1, 0)
             target = data[[target_column]]
-            return features, target
+            return features[self.__top_10_features], target
 
-        return features
+        return features[self.__top_10_features]
 
     def __create_path_for_save_trained_models(self) -> str:
         """
@@ -83,8 +84,8 @@ class DelayModel:
             os.mkdir(dir_path)
         return dir_path
 
-    def __prepocess_dataset(
-        self, data: pd.DataFrame, threshold_in_minutes: int, target_column: str
+    def prepocess_dataset(
+        self, data: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Preprocess the dataset by calculating the delay and creating features.
@@ -97,12 +98,7 @@ class DelayModel:
         Returns:
             Tuple[pd.DataFrame, pd.DataFrame]: Processed data and features.
         """
-        data["min_diff"] = data.apply(get_min_diff, axis=1)
-        data["delay"] = np.where(data["min_diff"] > threshold_in_minutes, 1, 0)
-        data = shuffle(
-            data[["OPERA", "MES", "TIPOVUELO", "SIGLADES", "DIANOM", "delay"]],
-            random_state=111,
-        )
+
         features = pd.concat(
             [
                 pd.get_dummies(data["OPERA"], prefix="OPERA"),
@@ -111,7 +107,7 @@ class DelayModel:
             ],
             axis=1,
         )
-        return data, features[self.__top_10_features]
+        return features
 
     def __scale_pos_weight(self, target: pd.DataFrame) -> float:
         """
@@ -155,6 +151,7 @@ class DelayModel:
             target,
             test_size=test_size,
             random_state=random_state,
+            shuffle=True,
         )
         return x_train, x_test, y_train, y_test
 
