@@ -1,8 +1,10 @@
 from typing import List
 
-import fastapi
 import pandas as pd
-from pydantic import BaseModel
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, validator
 
 from challenge.model import DelayModel
 
@@ -25,13 +27,30 @@ class Flight(BaseModel):
     TIPOVUELO: str
     MES: int
 
+    @validator("MES")
+    def valid_month_number(cls, month):
+        month_numbers = list(range(1, 13))
+        if month not in month_numbers:
+            raise ValueError(
+                f"MES must be a number between: {month_numbers}, but you five {month}"
+            )
+        return month
+
 
 class Flights(BaseModel):
     flights: List[Flight]
 
 
-app = fastapi.FastAPI()
+app = FastAPI()
 delay_model = DelayModel()
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"detail": exc.errors()},
+    )
 
 
 @app.get("/health", status_code=200)
@@ -46,13 +65,17 @@ def preprocess_flights(flights: Flights):
     for key in TOP_10_FEATURES:
         if key not in data_dict:
             data_dict[key] = [0]
+        else:
+            data_dict[key] = [1]
 
     remove_columns = [key for key in data_dict if key not in TOP_10_FEATURES]
-
+    print(remove_columns)
     for key in remove_columns:
         data_dict.pop(key)
+    ordered_keys = sorted(data_dict.keys(), key=lambda x: TOP_10_FEATURES.index(x))
 
-    return pd.DataFrame(data_dict)
+    ordered_dict = {key: data_dict[key] for key in ordered_keys}
+    return pd.DataFrame(ordered_dict)
 
 
 @app.post("/predict", status_code=200)
