@@ -30,5 +30,4 @@ archive.zip
 .DS_Store
 
 reports/
-trained_models/
 main*.py
