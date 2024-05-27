@@ -9,4 +9,4 @@ xgboost==2.0.3
 Jinja2==3.0.3
 itsdangerous==2.0.1
 Werkzeug==2.0.3
-PyYAML==5.4.1
+pyyaml==5.4.1
