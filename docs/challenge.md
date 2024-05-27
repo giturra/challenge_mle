@@ -129,40 +129,6 @@ The result of applying Cross Validation are depicted on this table:
 |                      |      | support   |	11118.000000    |	2523.000000	  | 0.534785 |	13641.000000 |	13641.000000 |
 
 
-
-
-
-	
-
-
-
-
-
-
-
-
-
-XGBoost	1	precision	0.874564	0.240733	0.547427	0.557649	0.757341
-recall	0.519201	0.671819	0.547427	0.595510	0.547427
-f1-score	0.651580	0.354454	0.547427	0.503017	0.596629
-support	11119.000000	2523.000000	0.547427	13642.000000	13642.000000
-2	precision	0.882459	0.248680	0.556997	0.565569	0.765284
-recall	0.526666	0.690722	0.556997	0.608694	0.556997
-f1-score	0.659645	0.365697	0.556997	0.512671	0.605299
-support	11119.000000	2522.000000	0.556997	13641.000000	13641.000000
-3	precision	0.878946	0.243570	0.547541	0.561258	0.761428
-recall	0.515920	0.686881	0.547541	0.601400	0.547541
-f1-score	0.650193	0.359618	0.547541	0.504905	0.596449
-support	11118.000000	2523.000000	0.547541	13641.000000	13641.000000
-4	precision	0.877905	0.244334	0.552086	0.561119	0.760722
-recall	0.523206	0.679350	0.552086	0.601278	0.552086
-f1-score	0.655658	0.359404	0.552086	0.507531	0.600864
-support	11118.000000	2523.000000	0.552086	13641.000000	13641.000000
-5	precision	0.879091	0.239826	0.534785	0.559458	0.760855
-recall	0.497661	0.698375	0.534785	0.598018	0.534785
-f1-score	0.635539	0.357042	0.534785	0.496290	0.584029
-support	11118.000000	2523.000000	0.534785	13641.000000	13641.000000
-
 The above table in the image presents the performance metrics of two binary classification models, Logistic Regression and XGBoost, evaluated using a 5-fold stratified cross-validation approach. The positive class represents delayed flights, which are much less frequent than the negative class (on-time flights), indicating a class imbalance problem. The key metrics shown in the table are accuracy, precision, recall, F1-score, support, macro average, and weighted average for each fold in each classifier.
 
 ##### Metrics and Results
