@@ -1,60 +1,12 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pandas as pd
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, validator
 
-from challenge.config import Config
+from challenge.api.models import TOP_10_FEATURES, Flights
 from challenge.model import DelayModel
-
-config = Config(config_path="challenge/configs/api_config.yaml")
-
-TOP_10_FEATURES = config.get("top_10_features", [])
-AIRLINES = config.get("airlines", [])
-MONTHS = config.get("months", [])
-FLIGHT_TYPES = config.get("flight_type", [])
-
-
-class Flight(BaseModel):
-    OPERA: str
-    TIPOVUELO: str
-    MES: int
-
-    @validator("MES")
-    def valid_month_number(cls, month: int) -> int:
-        """Validate that the month is between 1 and 12."""
-        if month not in MONTHS:
-            raise ValueError(
-                f"MES must be a number between: {MONTHS}, but you give {month}."
-            )
-        return month
-
-    @validator("OPERA")
-    def valid_flight_airline(cls, airline: str) -> str:
-        """Validate that the airline is in the list of valid airlines."""
-        if airline not in AIRLINES:
-            raise ValueError(
-                f"OPERA must be an airline between: {AIRLINES}, but you give "
-                f"{airline}."
-            )
-        return airline
-
-    @validator("TIPOVUELO")
-    def valid_flight_type(cls, flight_type: str) -> str:
-        """Validate that the flight type is either 'I' or 'N'."""
-        if flight_type not in FLIGHT_TYPES:
-            raise ValueError(
-                f"TIPOVUELO must be a flight type between: {FLIGHT_TYPES}, but"
-                f" you give {flight_type}."
-            )
-        return flight_type
-
-
-class Flights(BaseModel):
-    flights: List[Flight]
-
 
 app = FastAPI()
 delay_model = DelayModel()
@@ -103,7 +55,6 @@ def preprocess_flights(flights: Flights) -> pd.DataFrame:
     """
     data_df = pd.DataFrame(flights.dict()["flights"])
     data_dict = delay_model.prepocess_dataset(pd.DataFrame(data_df)).to_dict()
-    print(data_dict.keys())
     for key in TOP_10_FEATURES:
         if key not in data_dict:
             data_dict[key] = [0]
@@ -111,7 +62,6 @@ def preprocess_flights(flights: Flights) -> pd.DataFrame:
             data_dict[key] = [1]
 
     remove_columns = [key for key in data_dict if key not in TOP_10_FEATURES]
-    print(remove_columns)
     for key in remove_columns:
         data_dict.pop(key)
     ordered_keys = sorted(data_dict.keys(), key=lambda x: TOP_10_FEATURES.index(x))
