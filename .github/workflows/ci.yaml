@@ -3,10 +3,10 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - feature/adding-ci-cd-configurations
+      - develop
   pull_request:
     branches:
-      - feature/adding-ci-cd-configurations
+      - develop
 
 jobs:
   build-and-test:

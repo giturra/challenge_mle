@@ -3,7 +3,7 @@ name: CD Pipeline
 on:
   push:
     branches:
-      - feature/adding-ci-cd-configurations
+      - develop
 
 jobs:
   deploy:
