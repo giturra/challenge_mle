@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
+from .config import Config
 from .utils import get_min_diff
 
 
@@ -25,21 +26,11 @@ class DelayModel:
         """
         Initialize the DelayModel class.
         """
-        self.__top_10_features = [
-            "OPERA_Latin American Wings",
-            "MES_7",
-            "MES_10",
-            "OPERA_Grupo LATAM",
-            "MES_12",
-            "TIPOVUELO_I",
-            "MES_4",
-            "MES_11",
-            "OPERA_Sky Airline",
-            "OPERA_Copa Air",
-        ]
+        self.config = Config()
+        self.__top_10_features = self.config.get("top_10_features", default=[])
 
-        self.random_state = 1
-        self.learning_rate = 0.01
+        self.random_state = self.config.get("random_state", 1)
+        self.learning_rate = self.config.get("learning_rate", 0.01)
 
         self._model = None
 
