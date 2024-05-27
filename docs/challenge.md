@@ -217,7 +217,45 @@ Response time percentiles (approximated)
 
 ```
 
-## Part VI: CI/CD
+## Part VI: CI/CD Pipeline
+
+### Continual Integration
+
+Here a completed explination of each command: 
+
+1. **name: CI Pipeline**
+    - This sets the name of the workflow as "CI Pipeline."
+2. **on:**
+    - push:
+        - **develop:** The workflow is triggered when code is pushed to the develop branch.
+    - pull_request:
+        - branches:
+            - **develop:** The workflow is also triggered when a pull request is made to the develop branch.
+3. **jobs:**
+    - build-and-test:
+        - runs-on: ubuntu-latest: Specifies that the job will run on the latest version of an Ubuntu runner provided by GitHub.
+4. **steps:**
+    - name: Checkout code
+        - uses: actions/checkout@v3: This step uses the actions/checkout action to check out the repository's code to the runner, allowing subsequent steps to access the code.
+    - name: Set up Python
+        - uses: actions/setup-python@v4
+        - with: python-version: '3.10': This step sets up Python 3.10 on the runner using the actions/setup-python action.
+    - name: Install dependencies
+        - run: make install: This step runs the make install command to install the project's dependencies. The make install command is typically defined in a Makefile.
+    - name: Run tests
+        - run: |
+            - make model-test
+            - make api-test
+            - make stress-test
+            This step runs a series of tests defined in the Makefile. The make model-test, make api-test, and make stress-test commands execute different test suites for the project.
+    - name: Upload build artifacts
+            - uses: actions/upload-artifact@v2
+                - with:
+                - name: build-artifacts
+                - path: .
+            This step uses the actions/- upload-artifact action to upload build artifacts. The artifacts are named build-artifacts and the path . indicates that all files in the current directory will be included.
+
+### Continual Deployment
 
 ## References
 
