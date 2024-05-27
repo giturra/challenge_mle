@@ -15,15 +15,16 @@ class DelayModel:
     A model for predicting flight delays based on various features.
 
     Attributes:
-        __top_10_features (List[str]): List of top 10 features used for prediction.
-        random_state (int): Random state for reproducibility.
-        learning_rate (float): Learning rate for the XGBoost model.
-        _model (XGBClassifier): The XGBoost model instance.
-        trained_model_path (str): Path to save the trained model.
+        config (Config): Configuration object to load model parameters.
         model_name (str): Name of the model.
         model_version (str): Version of the model.
-        threshold_in_minutes (int): Threshold in minutes to determine delay.
+        random_state (int): Random state for reproducibility.
+        learning_rate (float): Learning rate for the XGBoost model.
+        __top_10_features (List[str]): List of top 10 features used for prediction.
         __raw_data_columns (List[str]): List of raw data columns.
+        _model (XGBClassifier): The XGBoost model instance.
+        threshold_in_minutes (int): Threshold in minutes to determine delay.
+        trained_model_path (str): Path to save the trained model.
     """
 
     def __init__(self) -> None:
