@@ -188,13 +188,34 @@ There are some other recommended features; however, since the Data Scientist tea
 
 ## Part I: Model Implementation
 
+### Config file
+
 ### Implementation details
 
 ## Part II: API Implementation
 
+### Config file
+
 ### Implementation details
 
 ## Part III: Deployment
+
+I deployed the model in Google Cloud by creating a Docker image using the Dockerfile provided in the project. The project was deployed in Python 3.10.
+
+- In the Dockerfile, there are comments explaining what each command does to deploy the application.
+- The model is available at [https://fastapi-model-koejv465lq-uc.a.run.app](https://fastapi-model-koejv465lq-uc.a.run.app).
+- The commands for deploying the model to GCP are in a cd.yaml file in order to follow the CI/CD pipeline. The explanation of the commands is found in the next section.
+- I ran the deployed model using the stress test without any failed requests. This is an example of its output:
+
+```
+Response time percentiles (approximated)
+ Type     Name                                                              50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|------------------------------------------------------------|---------|------|------|------|------|------|------|------|------|------|------|------|
+ POST     /predict                                                          160    190    220    230    520    600    650    680   4500   6200   6200   9040
+--------|------------------------------------------------------------|---------|------|------|------|------|------|------|------|------|------|------|------|
+ None     Aggregated                                                        160    190    220    230    520    600    650    680   4500   6200   6200   9040
+
+```
 
 ## Part VI: CI/CD
 
