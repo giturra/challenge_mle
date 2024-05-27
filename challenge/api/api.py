@@ -54,12 +54,13 @@ def preprocess_flights(flights: Flights) -> pd.DataFrame:
         pd.DataFrame: The preprocessed flight data.
     """
     data_df = pd.DataFrame(flights.dict()["flights"])
+    num_elem = len(flights.dict()["flights"])
     data_dict = delay_model.prepocess_dataset(pd.DataFrame(data_df)).to_dict()
     for key in TOP_10_FEATURES:
         if key not in data_dict:
-            data_dict[key] = [0]
+            data_dict[key] = [0 for _ in range(num_elem)]
         else:
-            data_dict[key] = [1]
+            data_dict[key] = [1 for _ in range(num_elem)]
 
     remove_columns = [key for key in data_dict if key not in TOP_10_FEATURES]
     for key in remove_columns:
