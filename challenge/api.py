@@ -6,20 +6,15 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, validator
 
+from challenge.config import Config
 from challenge.model import DelayModel
 
-TOP_10_FEATURES = [
-    "OPERA_Latin American Wings",
-    "MES_7",
-    "MES_10",
-    "OPERA_Grupo LATAM",
-    "MES_12",
-    "TIPOVUELO_I",
-    "MES_4",
-    "MES_11",
-    "OPERA_Sky Airline",
-    "OPERA_Copa Air",
-]
+config = Config(config_path="challenge/configs/api_config.yaml")
+
+TOP_10_FEATURES = config.get("top_10_features", [])
+AIRLINES = config.get("airlines", [])
+MONTHS = config.get("months", [])
+FLIGHT_TYPES = config.get("flight_type", [])
 
 
 class Flight(BaseModel):
@@ -30,44 +25,18 @@ class Flight(BaseModel):
     @validator("MES")
     def valid_month_number(cls, month: int) -> int:
         """Validate that the month is between 1 and 12."""
-        month_numbers = list(range(1, 13))
-        if month not in month_numbers:
+        if month not in MONTHS:
             raise ValueError(
-                f"MES must be a number between: {month_numbers}, but you give {month}."
+                f"MES must be a number between: {MONTHS}, but you give {month}."
             )
         return month
 
     @validator("OPERA")
     def valid_flight_airline(cls, airline: str) -> str:
         """Validate that the airline is in the list of valid airlines."""
-        validate_airlines = [
-            "Aerolineas Argentinas",
-            "Aeromexico",
-            "Air Canada",
-            "Air France",
-            "Alitalia",
-            "American Airlines",
-            "Austral",
-            "Avianca",
-            "British Airways",
-            "Copa Air",
-            "Delta Air",
-            "Gol Trans",
-            "Grupo LATAM",
-            "Iberia",
-            "JetSmart SPA",
-            "K.L.M.",
-            "Lacsa",
-            "Latin American Wings",
-            "Oceanair Linhas Aereas",
-            "Plus Ultra Lineas Aereas",
-            "Qantas Airways",
-            "Sky Airline",
-            "United Airlines",
-        ]
-        if airline not in validate_airlines:
+        if airline not in AIRLINES:
             raise ValueError(
-                f"OPERA must be an airline between: {validate_airlines}, but you give "
+                f"OPERA must be an airline between: {AIRLINES}, but you give "
                 f"{airline}."
             )
         return airline
@@ -75,10 +44,9 @@ class Flight(BaseModel):
     @validator("TIPOVUELO")
     def valid_flight_type(cls, flight_type: str) -> str:
         """Validate that the flight type is either 'I' or 'N'."""
-        validate_flight_type = ["I", "N"]
-        if flight_type not in validate_flight_type:
+        if flight_type not in FLIGHT_TYPES:
             raise ValueError(
-                f"TIPOVUELO must be a flight type between: {validate_flight_type}, but"
+                f"TIPOVUELO must be a flight type between: {FLIGHT_TYPES}, but"
                 f" you give {flight_type}."
             )
         return flight_type
