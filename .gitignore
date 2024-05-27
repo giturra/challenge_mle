@@ -29,5 +29,6 @@ archive.zip
 # macOS
 .DS_Store
 
+.ruff_cache
 reports/
 main*.py
