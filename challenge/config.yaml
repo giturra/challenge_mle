@@ -1,3 +1,8 @@
+model_name: xgboost_classifier
+model_version: 1.0
+random_state: 1
+learning_rate: 0.01
+threshold_in_minutes: 15
 top_10_features:
   - "OPERA_Latin American Wings"
   - "MES_7"
@@ -9,5 +14,7 @@ top_10_features:
   - "MES_11"
   - "OPERA_Sky Airline"
   - "OPERA_Copa Air"
-random_state: 1
-learning_rate: 0.01
+raw_data_columns:
+  - OPERA
+  - TIPOVUELO
+  - MES

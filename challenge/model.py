@@ -20,6 +20,10 @@ class DelayModel:
         learning_rate (float): Learning rate for the XGBoost model.
         _model (XGBClassifier): The XGBoost model instance.
         trained_model_path (str): Path to save the trained model.
+        model_name (str): Name of the model.
+        model_version (str): Version of the model.
+        threshold_in_minutes (int): Threshold in minutes to determine delay.
+        __raw_data_columns (List[str]): List of raw data columns.
     """
 
     def __init__(self) -> None:
@@ -27,14 +31,19 @@ class DelayModel:
         Initialize the DelayModel class.
         """
         self.config = Config()
-        self.__top_10_features = self.config.get("top_10_features", default=[])
+
+        self.model_name = self.config.get("model_name", "xgboost_classifier")
+        self.model_version = self.config.get("model_version", "1.0")
 
         self.random_state = self.config.get("random_state", 1)
         self.learning_rate = self.config.get("learning_rate", 0.01)
 
+        self.__top_10_features = self.config.get("top_10_features", default=[])
+        self.__raw_data_columns = self.config.get("raw_data_columns", default=[])
+
         self._model = None
 
-        self.threshold_in_minutes = 15
+        self.threshold_in_minutes = self.config.get("threshold_in_minutes", 15)
 
         self.trained_model_path = self.__create_path_for_save_trained_models()
 
@@ -92,9 +101,8 @@ class DelayModel:
 
         features = pd.concat(
             [
-                pd.get_dummies(data["OPERA"], prefix="OPERA"),
-                pd.get_dummies(data["TIPOVUELO"], prefix="TIPOVUELO"),
-                pd.get_dummies(data["MES"], prefix="MES"),
+                pd.get_dummies(data[column], prefix=column)
+                for column in self.__raw_data_columns
             ],
             axis=1,
         )
@@ -150,7 +158,9 @@ class DelayModel:
         """
         Save the trained model to a file.
         """
-        self._model.save_model(f"{self.trained_model_path}/xgb_model.json")
+        self._model.save_model(
+            f"{self.trained_model_path}/{self.model_name}{self.model_version}.json"
+        )
 
     def __load_model(self) -> XGBClassifier:
         """
@@ -160,7 +170,9 @@ class DelayModel:
             XGBClassifier: Loaded XGBoost model.
         """
         loaded_model = XGBClassifier()
-        loaded_model.load_model(f"{self.trained_model_path}/xgb_model.json")
+        loaded_model.load_model(
+            f"{self.trained_model_path}/{self.model_name}{self.model_version}.json"
+        )
         return loaded_model
 
     def get_model(self) -> XGBClassifier:
