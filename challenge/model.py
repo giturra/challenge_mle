@@ -31,7 +31,7 @@ class DelayModel:
         """
         Initialize the DelayModel class.
         """
-        self.config = Config()
+        self.config = Config(config_path="challenge/configs/model_config.yaml")
 
         self.model_name = self.config.get("model_name", "xgboost_classifier")
         self.model_version = self.config.get("model_version", "1.0")
@@ -67,7 +67,9 @@ class DelayModel:
         features = self.prepocess_dataset(data=data)
         if target_column:
             data["min_diff"] = data.apply(get_min_diff, axis=1)
-            data["delay"] = np.where(data["min_diff"] > self.threshold_in_minutes, 1, 0)
+            data[target_column] = np.where(
+                data["min_diff"] > self.threshold_in_minutes, 1, 0
+            )
             target = data[[target_column]]
             return features[self.__top_10_features], target
 
