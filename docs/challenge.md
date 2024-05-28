@@ -175,8 +175,8 @@ In order to support this findings the conclusions in [1] stablish that the recal
 
 |model                | recall_on_time_flights  | recall_delayed_flights |
 |---------------------|-------------------------|------------------------|
-| Logistic Regression |	0.545528                |	0.516531             |
-| XGBoost             |	0.644915                |	0.68542              |
+| Logistic Regression |	0.545528                |	0.516531               |
+| XGBoost             |	0.644915                |	0.68542                |
 
 
 Selected model: <strong> XGBoostClassifier </strong>
@@ -190,7 +190,54 @@ There are some other recommended features; however, since the Data Scientist tea
 
 ### Config file
 
+Since the model needs a lot of configuration, including hyperparameters and the features selected by the feature importance established by the Data Scientist team, it was necessary to centralize the configuration management, not just for the implementation of the production model, but also for the API implementation. I added the configuration files into the directory `challenge/configs`. The file that saves the configuration for the model is [challenge/configs/model_config.yaml](../challenge/configs/model_config.yaml), which contains: This version corrects the grammar and typos while maintaining the original meaning and context.
+
+```yaml
+model_name: xgboost_classifier # Name of the model
+model_version: 1.0 # Model version use to save and load the train model.
+random_state: 1 # Random state for the initial values of the hyperparameters.
+learning_rate: 0.01 # Learning rate during the training phase.
+threshold_in_minutes: 15 
+top_10_features: # Features selected by feature importance.
+  - "OPERA_Latin American Wings"
+  - "MES_7"
+  - "MES_10"
+  ...
+raw_data_columns: # Features used to encode as one-hot vectors.
+  - OPERA
+  - TIPOVUELO
+  - MES
+```
+
+The configuration setting is managed by the `Config` class:
+
+```python
+class Config:
+    ...
+
+    def load_config(self) -> Dict[str, Any]:
+        with open(self.config_path, "r") as file:
+            return yaml.safe_load(file)
+
+    def get(self, key: str, default: Optional[Any] = None) -> Any:
+        return self.config.get(key, default)
+```
+
+The most important methods are `load_config`, which loads the configuration file (the model file or the API file), and the `get` method, which extracts a key with its respective value to pass to the model class. 
+
 ### Implementation details
+
+In addition to the methods asked in the `DelayModel` class, I implemented some auxiliary methods, which are:
+
+- `__create_path_for_save_trained_models`: A method for creating a directory to store the trained model.
+- `prepocess_dataset`: An auxiliary method that creates the one-hot encoding representation of the features from the original dataset.
+- `__scale_pos_weight`: A method to compute the scale that considers class balances to improve performance during the prediction phase.
+- `__split_dataset:` A method to split the dataset into train and test partitions.
+- `__save_model:` A method to store the model once the training has finished.
+- `__load_model:` A method to load the model from the local machine where it is stored.
+- `get_model:` A method to retrieve the instance of the model during the prediction phase.
+
+I did not use some functions from the notebook, such as `is_high_season` and `get_period_day`, because they were not utilized by the Data Scientist team to predict flight delays. Furthermore, there was a typo in the output type defined for the preprocess function, which was changed from `Union(...)` to - `Union[...]`.
 
 ## Part II: API Implementation
 
@@ -221,41 +268,109 @@ Response time percentiles (approximated)
 
 ### Continual Integration
 
-Here a completed explination of each command: 
+Here a completed explaniation of each command: 
 
-1. **name: CI Pipeline**
-    - This sets the name of the workflow as "CI Pipeline."
-2. **on:**
-    - push:
-        - **develop:** The workflow is triggered when code is pushed to the develop branch.
-    - pull_request:
-        - branches:
-            - **develop:** The workflow is also triggered when a pull request is made to the develop branch.
-3. **jobs:**
-    - build-and-test:
-        - runs-on: ubuntu-latest: Specifies that the job will run on the latest version of an Ubuntu runner provided by GitHub.
-4. **steps:**
-    - name: Checkout code
-        - uses: actions/checkout@v3: This step uses the actions/checkout action to check out the repository's code to the runner, allowing subsequent steps to access the code.
-    - name: Set up Python
-        - uses: actions/setup-python@v4
-        - with: python-version: '3.10': This step sets up Python 3.10 on the runner using the actions/setup-python action.
-    - name: Install dependencies
-        - run: make install: This step runs the make install command to install the project's dependencies. The make install command is typically defined in a Makefile.
-    - name: Run tests
-        - run: |
-            - make model-test
-            - make api-test
-            - make stress-test
-            This step runs a series of tests defined in the Makefile. The make model-test, make api-test, and make stress-test commands execute different test suites for the project.
-    - name: Upload build artifacts
-            - uses: actions/upload-artifact@v2
-                - with:
-                - name: build-artifacts
-                - path: .
-            This step uses the actions/- upload-artifact action to upload build artifacts. The artifacts are named build-artifacts and the path . indicates that all files in the current directory will be included.
+```
+name: CI Pipeline  # Name of the workflow
+
+on:
+  push:
+    branches:  
+      - develop  # Triggered by pushes to the 'develop' branch
+  pull_request:
+    branches:
+      - develop  # Also triggered by pull requests to the 'develop' branch
+
+jobs:
+
+  build-and-test:
+    runs-on: ubuntu-latest  # Runs this job on the latest version of Ubuntu
+
+    steps:
+    
+    - name: Checkout code  # Step to check out the source code
+      uses: actions/checkout@v3  # Uses the checkout action version 3
+      
+    - name: Set up Python  # Step to set up Python
+      uses: actions/setup-python@v4  # Uses the setup-python action version 4
+      with:
+        python-version: '3.10'  # Sets Python version to 3.10
+        
+    - name: Install dependencies  # Step to install dependencies
+      run: make install  # Runs the command "make install"
+      
+    - name: Run tests  # Step to run tests
+      run: |  # Runs multiple commands
+        make model-test  # Runs model tests
+        make api-test  # Runs API tests
+        make stress-test  # Runs stress tests
+        
+    - name: Upload build artifacts  # Step to upload build artifacts
+      uses: actions/upload-artifact@v2  # Uses the upload-artifact action version 2
+      with:
+        name: build-artifacts  # Name of the artifact
+        path: .  # Path to the files to upload (current directory)
+```
 
 ### Continual Deployment
+
+Here a completed explaniation of each command: 
+
+```
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop  # Trigger this workflow on pushes to the 'develop' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
+    permissions:
+      contents: 'read'  # Read permissions for repository contents
+      id-token: 'write'  # Write permissions for ID tokens
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3  # Check out the repository code
+
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2  
+      # Authenticate to Google Cloud using Workload Identity Federation
+      with:
+        workload_identity_provider: 'projects/932859730377/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+        service_account: 'giturra@challenge-mle.iam.gserviceaccount.com'
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2  # Set up the Google Cloud SDK
+      with:
+        version: 'latest'  # Use the latest version of the SDK
+
+    - name: Configure Docker for GCP
+      run: gcloud auth configure-docker  # Configure Docker to use Google Cloud credentials
+
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:$GITHUB_SHA .  
+        # Build the Docker image and tag it with the commit SHA
+
+    - name: Push Docker image
+      run: |
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:$GITHUB_SHA  
+        # Push the Docker image to Google Container Registry
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy fastapi-app \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/fastapi-app:$GITHUB_SHA \
+          --platform managed \
+          --region us-central1 \
+          --allow-unauthenticated  
+          # Deploy the Docker image to Google Cloud Run
+```
 
 ## References
 
