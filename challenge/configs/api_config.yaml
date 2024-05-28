@@ -1,0 +1,54 @@
+airlines:
+  - "Aerolineas Argentinas"
+  - "Aeromexico"
+  - "Air Canada"
+  - "Air France"
+  - "Alitalia"
+  - "American Airlines"
+  - "Austral"
+  - "Avianca"
+  - "British Airways"
+  - "Copa Air"
+  - "Delta Air"
+  - "Gol Trans"
+  - "Grupo LATAM"
+  - "Iberia"
+  - "JetSmart SPA"
+  - "K.L.M."
+  - "Lacsa"
+  - "Latin American Wings"
+  - "Oceanair Linhas Aereas"
+  - "Plus Ultra Lineas Aereas"
+  - "Qantas Airways"
+  - "Sky Airline"
+  - "United Airlines"
+
+months:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6 
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+
+flight_type:
+  - "N"
+  - "I"
+
+top_10_features:
+  - "OPERA_Latin American Wings"
+  - "MES_7"
+  - "MES_10"
+  - "OPERA_Grupo LATAM"
+  - "MES_12"
+  - "TIPOVUELO_I"
+  - "MES_4"
+  - "MES_11"
+  - "OPERA_Sky Airline"
+  - "OPERA_Copa Air"
