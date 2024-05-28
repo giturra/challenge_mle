@@ -5,9 +5,12 @@
 
 ## Gitflow methodology
 
-In order to code all parts of the challenge, I followed the gitflow workflow. For each new feature added to the project, I created a new branch with the naming convention `feature/<brief-description>`, where `<brief-description>` describes in a few words the new feature added to the project. Once a `feature/<brief-description>` branch was finished, it was merged into the develop branch to keep it updated. Finally, when the development of the project was finished, the `develop` branch was merged into the `main` branch, which is the official branch, to release the official version of the project.
+In order to code all parts of the challenge, I followed the gitflow workflow. For each new feature added to the project, I created a new branch with the naming convention `feature/<brief-description>`, where `<brief-description>` describes in a few words the new feature added to the project. Once a `feature/<brief-description>` branch was finished, it was merged into the main branch to keep it updated. Finally, when the mainment of the project was finished, the `main` branch was merged into the `main` branch, which is the official branch, to release the official version of the project.
 
-However, in a correct gitflow methodology, it is necessary to create a pull request before adding a new feature to the `develop` branch. When the code reviewer approves the changes, these changes are merged into the `develop` branch. These steps were omitted in order to save development time. I just created a pull request to merge the `develop` branch into the `main` branch and create the release version.
+However, in a correct gitflow methodology, it is necessary to create a pull request before adding a new feature to the `main` branch. When the code reviewer approves the changes, these changes are merged into the `main` branch. These steps were omitted in order to save mainment time. I just created a pull request to merge the `main` branch into the `main` branch and create the release version. Moreover, sometimes I had to make some small updates in certain branches, I did it in the updates in same branch in order to save time, but the correct way of doing this is development in hot-fix branches that do not require a Pull Request approve before merge into develop or main branches.
+
+
+However, in a correct Gitflow methodology, it is necessary to create a pull request before adding a new feature to the `main` branch. When the code reviewer approves the changes, these changes are merged into the `main` branch. These steps were omitted to save maintenance time. I just created a pull request to merge the `develop` branch into the `main` branch and create the release version. Moreover, sometimes I had to make some small updates in certain branches, and I did these updates in the same branch to save time. The correct way of doing this is to develop in hot-fix branches that do not require a pull request approval before merging into the `develop` or `main` branches.
 
 ## Notebook Exploration and Bug Fixing
 
@@ -183,7 +186,20 @@ Selected model: <strong> XGBoostClassifier </strong>
 
 ### Other recomemded features
 
-There are some other recommended features; however, since the Data Scientist team did not use them, I did not analyze them either. These features are *high_season* and *period_day*. Since the challenge specifically mentioned that I did not have to explore the impact of these features on the model performance, I did not include them in the prediction
+There are some other recommended features; however, since the Data Scientist team did not use them, I did not analyze them either. These features are *high_season* and *period_day*. Since the challenge specifically mentioned that I did not have to explore the impact of these features on the model performance, I did not include them in the prediction.
+
+### Compabilities issues
+
+There were some compatibility issues related to certain libraries, especially with FastAPI and Unicorn libraries, when I attempted to run the tests to measure the performance of my implementations. Therefore, I had to install some dependencies that are prior to the recommended versions. Here is the complete list of dependencies that I had to install:
+
+- `anyio==3.4.0`
+- `Jinja2==3.0.3`
+- `itsdangerous==2.0.1`
+- `Werkzeug==2.0.3`
+
+### New libraries installed
+
+Since I selected the `XGBoostClassifier` model as the production model to be deployed, I had to install the `xgboost` library because the implementation of this classifier is not included in `scikit-learn`. Moreover, I installed the `pyyaml` library to open and interact with the configuration YAML files, which are in charge of parameter management for the `DelayModel` class and the API implementation.
 
 
 ## Part I: Model Implementation
@@ -284,7 +300,7 @@ In FastAPI, it is considered best practice to define the input and output of eac
 - Input/Output Data Validation: By delegating validation to `Pydantic, the API ensures that all input and output data conform to the specified schemas.
 - Error Handling: `Pydantic` automatically handles validation errors, returning appropriate status codes when validation fails.
 
-- In my implementation, I developed two separate files to implement the API:
+- In my implementation, I mained two separate files to implement the API:
 
 In the file `models`, I implemented the `Pydantic` models to preprocess the input for each endpoint. The implemented models are:
 
@@ -329,10 +345,10 @@ name: CI Pipeline  # Name of the workflow
 on:
   push:
     branches:  
-      - develop  # Triggered by pushes to the 'develop' branch
+      - main  # Triggered by pushes to the 'main' branch
   pull_request:
     branches:
-      - develop  # Also triggered by pull requests to the 'develop' branch
+      - main  # Also triggered by pull requests to the 'main' branch
 
 jobs:
 
@@ -375,7 +391,7 @@ name: CD Pipeline
 on:
   push:
     branches:
-      - develop  # Trigger this workflow on pushes to the 'develop' branch
+      - main  # Trigger this workflow on pushes to the 'main' branch
 
 jobs:
   deploy:
