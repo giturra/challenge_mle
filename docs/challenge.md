@@ -241,9 +241,62 @@ I did not use some functions from the notebook, such as `is_high_season` and `ge
 
 ## Part II: API Implementation
 
+In this section, I separated the API implementation into two parts:
+
+- I created a new subpackage called api that contains the `Pydantic` models for processing the input transferred by the endpoint and the API implementation.
+ - I created a configuration file to load the main list used by the API implementation
+
 ### Config file
 
+As the model implementation, the API implementation has a configuration file, which is store in [challenge/configs/api_config.yaml](../challenge/configs/api_config.yaml). This file contain:
+
+```yaml
+# The airlines that the input from each request could bring.
+airlines: 
+  - "Aerolineas Argentinas"
+  - "Aeromexico"
+  - "Air Canada"
+  - "Air France"
+  ...
+# The months that the input from each request could bring, expressed in number from 1 to 12.
+months: 
+  - 1
+  - 2
+  ...
+
+ # The flight type that the input from each request could bring, expressed I or N, for internationan or national.
+flight_type:
+  - "N"
+  - "I"
+# Features selected by feature importance.
+top_10_features: 
+  - "OPERA_Latin American Wings"
+  - "MES_7"
+  - "MES_10"
+  ...
+
+``` 
+
 ### Implementation details
+
+In FastAPI, it is considered best practice to define the input and output of each API route using `Pydantic` models. This approach offers several advantages, including:
+
+- Input/Output Data Validation: By delegating validation to `Pydantic, the API ensures that all input and output data conform to the specified schemas.
+- Error Handling: `Pydantic` automatically handles validation errors, returning appropriate status codes when validation fails.
+
+- In my implementation, I developed two separate files to implement the API:
+
+In the file `models`, I implemented the `Pydantic` models to preprocess the input for each endpoint. The implemented models are:
+
+  - `Flight`: A model that stores the three input data fields (these variables are based on the attributes from the dictionaries of the API test), which are `OPERA`, `TIPOVUELO`, and `MES`. `OPERA` represents the airline that organizes the flight.
+  - `Flights`: A model that can store a list of flights in case a request submits information for more than one flight.
+  
+  Furthermore, I used the `validator` decorator to define the correct form for each input. If an input field does not match this validation, a 400 error is raised, indicating the correct format for each specific input.
+
+In the file `api`, I implemented the `predict` endpoint, which is responsible for calling the model and making a prediction from the input data that is in the correct format or has passed validation by the `Pydantic` models. The other two important functions are:
+
+- `preprocess_flights` function: This function processes the input data to create a DataFrame that matches the features the classifier was trained on.
+- `validation_exception_handler` function: This function raises a 400 error if any of the input data does not match the correct format validated by the `Pydantic` models
 
 ## Part III: Deployment
 
@@ -268,7 +321,7 @@ Response time percentiles (approximated)
 
 ### Continual Integration
 
-Here a completed explaniation of each command: 
+Here a completed explanation of each command: 
 
 ```
 name: CI Pipeline  # Name of the workflow
@@ -314,7 +367,7 @@ jobs:
 
 ### Continual Deployment
 
-Here a completed explaniation of each command: 
+Here a completed explanation of each command: 
 
 ```
 name: CD Pipeline
